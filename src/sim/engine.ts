@@ -82,7 +82,7 @@ export class Simulation {
     return {
       id: `R${i + 1}`,
       name: `AMR-0${i + 1}`,
-      pos: { ...START_CELLS[i] },
+      pos: { ...START_CELLS[i]! },
       yaw: 0,
       battery: 100,
       status: "idle",
@@ -122,22 +122,22 @@ export class Simulation {
 
     switch (id) {
       case 1: {
-        for (let i = 0; i < 4; i++) this.addTask(PICKUPS[i], DROPOFFS[i], 1 + (i % 2));
+        for (let i = 0; i < 4; i++) this.addTask(PICKUPS[i]!, DROPOFFS[i]!, 1 + (i % 2));
         break;
       }
       case 2: {
         for (let i = 0; i < 8; i++) {
-          this.addTask(PICKUPS[i % 4], DROPOFFS[(i + 2) % 4], (i % 3) + 1);
+          this.addTask(PICKUPS[i % 4]!, DROPOFFS[(i + 2) % 4]!, (i % 3) + 1);
         }
-        this.robots[1].battery = 46;
-        this.robots[2].battery = 72;
+        this.robots[1]!.battery = 46;
+        this.robots[2]!.battery = 72;
         this.log("info", "Fleet batteries differ — allocation must account for it");
         break;
       }
       case 3: {
-        this.addTask(PICKUPS[0], DROPOFFS[3], 2);
-        this.addTask(PICKUPS[3], DROPOFFS[0], 2);
-        this.addTask(PICKUPS[1], DROPOFFS[2], 1);
+        this.addTask(PICKUPS[0]!, DROPOFFS[3]!, 2);
+        this.addTask(PICKUPS[3]!, DROPOFFS[0]!, 2);
+        this.addTask(PICKUPS[1]!, DROPOFFS[2]!, 1);
         this.log("info", "Planned A* routes are drawn as coloured lines on the floor");
         break;
       }
@@ -149,8 +149,8 @@ export class Simulation {
         break;
       }
       case 5: {
-        this.addTask(PICKUPS[0], DROPOFFS[0], 2);
-        this.addTask(PICKUPS[2], DROPOFFS[2], 1);
+        this.addTask(PICKUPS[0]!, DROPOFFS[0]!, 2);
+        this.addTask(PICKUPS[2]!, DROPOFFS[2]!, 1);
         this.scripts.push({
           at: 7,
           done: false,
@@ -164,7 +164,7 @@ export class Simulation {
         break;
       }
       case 6: {
-        for (let i = 0; i < 3; i++) this.addTask(PICKUPS[i], DROPOFFS[3 - i], 2);
+        for (let i = 0; i < 3; i++) this.addTask(PICKUPS[i]!, DROPOFFS[3 - i]!, 2);
         this.spawnObstacle({ x: 11, y: 6 }, true, "worker");
         this.spawnObstacle({ x: 19, y: 14 }, true, "worker");
         this.spawnObstacle({ x: 7, y: 12 }, true, "pallet");
@@ -172,12 +172,12 @@ export class Simulation {
         break;
       }
       case 7: {
-        for (let i = 0; i < 4; i++) this.addTask(PICKUPS[i], DROPOFFS[i], 2);
+        for (let i = 0; i < 4; i++) this.addTask(PICKUPS[i]!, DROPOFFS[i]!, 2);
         this.scripts.push({ at: 9, done: false, run: (s) => s.failRobot("R2") });
         break;
       }
       case 8: {
-        for (let i = 0; i < 6; i++) this.addTask(PICKUPS[i % 4], DROPOFFS[(i + 1) % 4], (i % 3) + 1);
+        for (let i = 0; i < 6; i++) this.addTask(PICKUPS[i % 4]!, DROPOFFS[(i + 1) % 4]!, (i % 3) + 1);
         this.scripts.push({ at: 8, done: false, run: (s) => s.failRobot("R2") });
         this.scripts.push({ at: 20, done: false, run: (s) => s.recoverRobot("R2") });
         break;
@@ -232,8 +232,8 @@ export class Simulation {
   }
 
   addRandomTask() {
-    const p = PICKUPS[Math.floor(Math.random() * PICKUPS.length)];
-    const d = DROPOFFS[Math.floor(Math.random() * DROPOFFS.length)];
+    const p = PICKUPS[Math.floor(Math.random() * PICKUPS.length)]!;
+    const d = DROPOFFS[Math.floor(Math.random() * DROPOFFS.length)]!;
     return this.addTask(p, d, 1 + Math.floor(Math.random() * 3));
   }
 
@@ -250,7 +250,7 @@ export class Simulation {
       pos: { ...pos },
       kind,
       moving,
-      dir: dirs[Math.floor(Math.random() * dirs.length)],
+      dir: dirs[Math.floor(Math.random() * dirs.length)]!,
       speed: kind === "worker" ? 0.9 : 0.5,
     });
     this.log("obstacle", `${kind === "worker" ? "Worker" : "Pallet"} detected at ${cellName(pos)}`);
@@ -261,7 +261,7 @@ export class Simulation {
     // Drop an obstacle a few cells ahead of a busy robot so avoidance triggers.
     const busy = this.robots.find((r) => r.path.length > 3 && r.status !== "failed");
     if (busy) {
-      const cell = busy.path[Math.min(busy.pathIndex + 3, busy.path.length - 1)];
+      const cell = busy.path[Math.min(busy.pathIndex + 3, busy.path.length - 1)]!;
       this.spawnObstacle(cell, Math.random() > 0.5, Math.random() > 0.5 ? "worker" : "pallet");
       return;
     }
@@ -474,7 +474,7 @@ export class Simulation {
 
   private pathHitsBlock(r: Robot) {
     for (let i = r.pathIndex; i < r.path.length; i++) {
-      if (this.blocked.has(key(r.path[i].x, r.path[i].y))) return true;
+      if (this.blocked.has(key(r.path[i]!.x, r.path[i]!.y))) return true;
     }
     return false;
   }
@@ -496,7 +496,7 @@ export class Simulation {
     for (const other of this.robots) {
       if (other.id === r.id || other.status === "failed") continue;
       const oc = { x: Math.round(other.pos.x), y: Math.round(other.pos.y) };
-      const on = other.path[other.pathIndex];
+      const on = other.path[other.pathIndex]!;
       const sameCell = oc.x === next.x && oc.y === next.y;
       const sameTarget = on && on.x === next.x && on.y === next.y;
       if (!sameCell && !sameTarget) continue;
@@ -558,7 +558,7 @@ export class Simulation {
 
     // Low battery: abandon task, head to a charger.
     if (r.battery <= LOW_BATTERY && r.taskId === null) {
-      const charger = CHARGERS[Number(r.id.slice(1)) - 1] ?? CHARGERS[0];
+      const charger = CHARGERS[Number(r.id.slice(1)) - 1]! ?? CHARGERS[0]!;
       this.setDestination(r, charger, "charging");
       r.lastEvent = "Low battery — docking";
       this.log("battery", `${r.name} battery ${Math.round(r.battery)}% — heading to charger`);
@@ -597,7 +597,7 @@ export class Simulation {
   }
 
   private drive(r: Robot, dt: number) {
-    const next = r.path[r.pathIndex];
+    const next = r.path[r.pathIndex]!;
     if (!next) {
       this.arrive(r);
       return;
