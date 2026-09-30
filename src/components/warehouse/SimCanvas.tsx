@@ -33,43 +33,43 @@ export function SimCanvas() {
     <Canvas
       shadows
       dpr={[1, 1.75]}
-      camera={{ position: [0, 34, 40], fov: 48 }}
+      camera={{ position: [0, 36, 46], fov: 46 }}
       gl={{ antialias: true }}
     >
-      <color attach="background" args={["#1a1f27"]} />
-      <fog attach="fog" args={["#1a1f27", 70, 150]} />
+      <color attach="background" args={["#141820"]} />
+      <fog attach="fog" args={["#141820", 90, 240]} />
 
       <hemisphereLight args={["#cdd7e2", "#4a4d52", 0.55]} />
       <ambientLight intensity={0.45} />
       <directionalLight
-        position={[26, 34, 18]}
+        position={[32, 48, 24]}
         intensity={1.35}
         castShadow
         shadow-mapSize-width={2048}
         shadow-mapSize-height={2048}
-        shadow-camera-left={-45}
-        shadow-camera-right={45}
-        shadow-camera-top={35}
-        shadow-camera-bottom={-35}
+        shadow-camera-left={-48}
+        shadow-camera-right={48}
+        shadow-camera-top={42}
+        shadow-camera-bottom={-42}
         shadow-bias={-0.0005}
       />
-      <directionalLight position={[-24, 20, -16]} intensity={0.45} color="#b9c6d6" />
+      <directionalLight position={[-26, 28, -20]} intensity={0.45} color="#b9c6d6" />
 
       <Environment>
-        <Lightformer intensity={1.6} position={[0, 12, 0]} scale={[30, 20, 1]} />
+        <Lightformer intensity={1.6} position={[0, 22, 0]} scale={[48, 36, 1]} />
         <Lightformer
           intensity={0.8}
           color="#cfe0f0"
-          position={[-20, 6, 0]}
+          position={[-25, 10, 0]}
           rotation-y={Math.PI / 2}
-          scale={[40, 4, 1]}
+          scale={[50, 6, 1]}
         />
         <Lightformer
           intensity={0.8}
           color="#f2e2c6"
-          position={[20, 6, 0]}
+          position={[25, 10, 0]}
           rotation-y={-Math.PI / 2}
-          scale={[40, 4, 1]}
+          scale={[50, 6, 1]}
         />
       </Environment>
 
@@ -96,10 +96,10 @@ export function SimCanvas() {
       <Ticker />
       <OrbitControls
         makeDefault
-        target={[0, 0, 0]}
-        minDistance={8}
-        maxDistance={95}
-        maxPolarAngle={Math.PI / 2.15}
+        target={[0, 1, 0]}
+        minDistance={6}
+        maxDistance={145}
+        maxPolarAngle={Math.PI / 2.08}
         enableDamping
         dampingFactor={0.08}
       />

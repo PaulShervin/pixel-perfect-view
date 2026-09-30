@@ -11,6 +11,7 @@ import {
   PICKUPS,
   RACK_RUNS,
   WAREHOUSE_DEPTH,
+  WAREHOUSE_HEIGHT,
   WAREHOUSE_WIDTH,
   gridToWorld,
 } from "@/sim/grid";
@@ -222,10 +223,60 @@ function Shell() {
   const wallTex = useMemo(() => makeWallTexture(), []);
   const w = WAREHOUSE_WIDTH + 4;
   const d = WAREHOUSE_DEPTH + 4;
-  const h = 9;
+  const h = WAREHOUSE_HEIGHT;
+
   return (
     <group>
-      {/* walls */}
+      {/* Perimeter foundation curb / plinth */}
+      <mesh position={[0, 0.3, -d / 2]} receiveShadow>
+        <boxGeometry args={[w, 0.6, 0.35]} />
+        <meshStandardMaterial color="#2c323b" roughness={0.9} />
+      </mesh>
+      <mesh position={[0, 0.3, d / 2]} receiveShadow>
+        <boxGeometry args={[w, 0.6, 0.35]} />
+        <meshStandardMaterial color="#2c323b" roughness={0.9} />
+      </mesh>
+      <mesh position={[-w / 2, 0.3, 0]} receiveShadow>
+        <boxGeometry args={[0.35, 0.6, d]} />
+        <meshStandardMaterial color="#2c323b" roughness={0.9} />
+      </mesh>
+      <mesh position={[w / 2, 0.3, 0]} receiveShadow>
+        <boxGeometry args={[0.35, 0.6, d]} />
+        <meshStandardMaterial color="#2c323b" roughness={0.9} />
+      </mesh>
+
+      {/* Structural corner columns */}
+      {[
+        [-w / 2, h / 2, -d / 2],
+        [w / 2, h / 2, -d / 2],
+        [-w / 2, h / 2, d / 2],
+        [w / 2, h / 2, d / 2],
+      ].map((pos, i) => (
+        <mesh key={i} position={pos as [number, number, number]} castShadow>
+          <boxGeometry args={[0.5, h, 0.5]} />
+          <meshStandardMaterial color="#282f3a" metalness={0.6} roughness={0.4} />
+        </mesh>
+      ))}
+
+      {/* Roof perimeter fascia / parapet beam */}
+      <mesh position={[0, h, -d / 2]}>
+        <boxGeometry args={[w + 0.5, 0.45, 0.45]} />
+        <meshStandardMaterial color="#20252e" metalness={0.7} roughness={0.3} />
+      </mesh>
+      <mesh position={[0, h, d / 2]}>
+        <boxGeometry args={[w + 0.5, 0.45, 0.45]} />
+        <meshStandardMaterial color="#20252e" metalness={0.7} roughness={0.3} />
+      </mesh>
+      <mesh position={[-w / 2, h, 0]}>
+        <boxGeometry args={[0.45, 0.45, d + 0.5]} />
+        <meshStandardMaterial color="#20252e" metalness={0.7} roughness={0.3} />
+      </mesh>
+      <mesh position={[w / 2, h, 0]}>
+        <boxGeometry args={[0.45, 0.45, d + 0.5]} />
+        <meshStandardMaterial color="#20252e" metalness={0.7} roughness={0.3} />
+      </mesh>
+
+      {/* High-bay walls — FrontSide facing inward so camera viewing from outside sees inside unobstructed */}
       {[
         { p: [0, h / 2, -d / 2] as [number, number, number], r: 0, len: w },
         { p: [0, h / 2, d / 2] as [number, number, number], r: Math.PI, len: w },
@@ -236,40 +287,63 @@ function Shell() {
           <planeGeometry args={[wall.len, h]} />
           <meshStandardMaterial
             map={wallTex}
-            color="#8b939c"
-            side={THREE.DoubleSide}
-            roughness={0.75}
-            metalness={0.15}
+            color="#8c949e"
+            side={THREE.FrontSide}
+            roughness={0.7}
+            metalness={0.2}
           />
         </mesh>
       ))}
-      {/* roof */}
+
+      {/* Ceiling / roof plane — FrontSide faces down into warehouse. From outside/above, it is backface-culled so interior is 100% visible when zooming out */}
       <mesh position={[0, h, 0]} rotation-x={Math.PI / 2}>
         <planeGeometry args={[w, d]} />
-        <meshStandardMaterial color="#20252c" side={THREE.DoubleSide} roughness={0.9} />
+        <meshStandardMaterial color="#1a1e25" side={THREE.FrontSide} roughness={0.9} />
       </mesh>
-      {/* trusses + light fixtures */}
+
+      {/* Open structural trusses & industrial LED pendant luminaires */}
       {Array.from({ length: 7 }).map((_, i) => {
         const z = -d / 2 + 4 + i * ((d - 8) / 6);
         return (
           <group key={i} position={[0, 0, z]}>
-            <mesh position={[0, h - 0.6, 0]}>
-              <boxGeometry args={[w - 1, 0.25, 0.25]} />
-              <meshStandardMaterial color="#4a525c" metalness={0.5} roughness={0.5} />
+            {/* Upper truss chord */}
+            <mesh position={[0, h - 0.7, 0]}>
+              <boxGeometry args={[w - 1, 0.35, 0.28]} />
+              <meshStandardMaterial color="#47505c" metalness={0.6} roughness={0.4} />
             </mesh>
-            {[-16, 0, 16].map((x) => (
-              <group key={x} position={[x, h - 1.2, 0]}>
-                <mesh>
-                  <boxGeometry args={[3.2, 0.18, 0.5]} />
-                  <meshStandardMaterial
-                    color="#f6f2e4"
-                    emissive="#fff4d6"
-                    emissiveIntensity={1.7}
-                  />
+            {/* Lower truss chord */}
+            <mesh position={[0, h - 2.2, 0]}>
+              <boxGeometry args={[w - 1, 0.2, 0.2]} />
+              <meshStandardMaterial color="#38404a" metalness={0.6} roughness={0.4} />
+            </mesh>
+            {/* Truss vertical web struts */}
+            {[-22, -15, -8, 0, 8, 15, 22].map((tx) => (
+              <mesh key={tx} position={[tx, h - 1.45, 0]}>
+                <boxGeometry args={[0.16, 1.4, 0.16]} />
+                <meshStandardMaterial color="#38404a" metalness={0.6} roughness={0.4} />
+              </mesh>
+            ))}
+            {/* High-bay pendant LED fixtures suspended down */}
+            {[-18, -9, 0, 9, 18].map((x) => (
+              <group key={x} position={[x, h - 2.8, 0]}>
+                {/* Suspension drop cable */}
+                <mesh position={[0, 0.6, 0]}>
+                  <cylinderGeometry args={[0.015, 0.015, 1.2, 6]} />
+                  <meshStandardMaterial color="#1d2024" metalness={0.8} />
                 </mesh>
-                <mesh position={[0, 0.16, 0]}>
-                  <boxGeometry args={[3.4, 0.2, 0.7]} />
-                  <meshStandardMaterial color="#2e343c" metalness={0.4} />
+                {/* Industrial bell reflector housing */}
+                <mesh position={[0, 0, 0]} castShadow>
+                  <cylinderGeometry args={[0.3, 0.75, 0.3, 16]} />
+                  <meshStandardMaterial color="#2b323c" metalness={0.7} roughness={0.3} />
+                </mesh>
+                {/* Luminous LED emitter lens */}
+                <mesh position={[0, -0.14, 0]}>
+                  <cylinderGeometry args={[0.68, 0.68, 0.04, 16]} />
+                  <meshStandardMaterial
+                    color="#fff6de"
+                    emissive="#ffe9b3"
+                    emissiveIntensity={2.5}
+                  />
                 </mesh>
               </group>
             ))}

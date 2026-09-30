@@ -8,24 +8,105 @@ import { getSim } from "@/sim/engine";
 const BODY_YELLOW = "#f2a417";
 const BODY_DARK = "#26292e";
 
-function Wheel({ position }: { position: [number, number, number] }) {
+function Wheel({
+  position,
+  side,
+  innerRef,
+}: {
+  position: [number, number, number];
+  side: "left" | "right";
+  innerRef: React.Ref<THREE.Group>;
+}) {
+  const isLeft = side === "left";
+  const rimFaceX = isLeft ? -0.118 : 0.118;
+  const boltFaceX = isLeft ? -0.126 : 0.126;
+
   return (
     <group position={position}>
-      <mesh rotation-z={Math.PI / 2} castShadow>
-        <cylinderGeometry args={[0.3, 0.3, 0.22, 20]} />
-        <meshStandardMaterial color="#15171a" roughness={0.95} />
+      {/* Static axle mount to chassis */}
+      <mesh position={[isLeft ? 0.07 : -0.07, 0, 0]}>
+        <boxGeometry args={[0.06, 0.14, 0.16]} />
+        <meshStandardMaterial color="#1a1d22" roughness={0.8} />
       </mesh>
-      <mesh rotation-z={Math.PI / 2}>
-        <cylinderGeometry args={[0.14, 0.14, 0.24, 14]} />
-        <meshStandardMaterial color="#9aa1ab" metalness={0.8} roughness={0.35} />
-      </mesh>
+
+      {/* Rotating wheel group — spins around its own local X-axis */}
+      <group ref={innerRef}>
+        {/* Main rubber tire */}
+        <mesh rotation-z={Math.PI / 2} castShadow>
+          <cylinderGeometry args={[0.3, 0.3, 0.22, 24]} />
+          <meshStandardMaterial color="#141619" roughness={0.95} />
+        </mesh>
+
+        {/* Outer tire tread profile accent */}
+        <mesh rotation-z={Math.PI / 2}>
+          <cylinderGeometry args={[0.303, 0.303, 0.08, 24]} />
+          <meshStandardMaterial color="#1f2329" roughness={0.9} />
+        </mesh>
+
+        {/* Metallic alloy rim */}
+        <mesh rotation-z={Math.PI / 2}>
+          <cylinderGeometry args={[0.18, 0.18, 0.235, 18]} />
+          <meshStandardMaterial color="#8b94a0" metalness={0.85} roughness={0.25} />
+        </mesh>
+
+        {/* Inner rim recess */}
+        <mesh position={[rimFaceX, 0, 0]} rotation-z={Math.PI / 2}>
+          <cylinderGeometry args={[0.15, 0.15, 0.02, 18]} />
+          <meshStandardMaterial color="#2a303a" metalness={0.7} roughness={0.4} />
+        </mesh>
+
+        {/* Center hub cap */}
+        <mesh position={[rimFaceX, 0, 0]} rotation-z={Math.PI / 2}>
+          <cylinderGeometry args={[0.06, 0.06, 0.03, 16]} />
+          <meshStandardMaterial color="#181c22" metalness={0.5} roughness={0.5} />
+        </mesh>
+
+        {/* 5 Wheel rim lug nuts in circular pattern */}
+        {Array.from({ length: 5 }).map((_, k) => {
+          const a = (k * 2 * Math.PI) / 5;
+          return (
+            <mesh
+              key={k}
+              position={[boltFaceX, Math.sin(a) * 0.1, Math.cos(a) * 0.1]}
+              rotation-z={Math.PI / 2}
+            >
+              <cylinderGeometry args={[0.016, 0.016, 0.016, 6]} />
+              <meshStandardMaterial color="#d8dee9" metalness={0.95} roughness={0.2} />
+            </mesh>
+          );
+        })}
+
+        {/* Spoke accent notches */}
+        {Array.from({ length: 4 }).map((_, k) => {
+          const a = (k * Math.PI) / 2;
+          return (
+            <mesh
+              key={`spoke-${k}`}
+              position={[rimFaceX, Math.sin(a) * 0.12, Math.cos(a) * 0.12]}
+              rotation-x={a}
+            >
+              <boxGeometry args={[0.018, 0.035, 0.035]} />
+              <meshStandardMaterial color="#353c47" metalness={0.8} roughness={0.3} />
+            </mesh>
+          );
+        })}
+
+        {/* Valve stem marker on outer rim lip for crisp visual rotation */}
+        <mesh position={[boltFaceX, 0.22, 0]} rotation-z={Math.PI / 2}>
+          <cylinderGeometry args={[0.012, 0.012, 0.02, 8]} />
+          <meshStandardMaterial color="#ffaa00" emissive="#ffaa00" emissiveIntensity={0.8} />
+        </mesh>
+      </group>
     </group>
   );
 }
 
 export function Amr({ index }: { index: number }) {
   const group = useRef<THREE.Group>(null);
-  const wheels = useRef<THREE.Group>(null);
+  const flWheel = useRef<THREE.Group>(null);
+  const rlWheel = useRef<THREE.Group>(null);
+  const frWheel = useRef<THREE.Group>(null);
+  const rrWheel = useRef<THREE.Group>(null);
   const lidar = useRef<THREE.Group>(null);
   const beacon = useRef<THREE.Mesh>(null);
   const crate = useRef<THREE.Group>(null);
@@ -39,7 +120,15 @@ export function Amr({ index }: { index: number }) {
     const z = (r.pos.y - (GRID_H - 1) / 2) * CELL;
     g.position.set(x, 0, z);
     g.rotation.y = r.yaw;
-    if (wheels.current) wheels.current.rotation.x = r.wheelSpin;
+
+    // Correct local-axis rotation for each individual wheel
+    const leftSpin = -(r.leftWheelSpin ?? r.wheelSpin);
+    const rightSpin = -(r.rightWheelSpin ?? r.wheelSpin);
+    if (flWheel.current) flWheel.current.rotation.x = leftSpin;
+    if (rlWheel.current) rlWheel.current.rotation.x = leftSpin;
+    if (frWheel.current) frWheel.current.rotation.x = rightSpin;
+    if (rrWheel.current) rrWheel.current.rotation.x = rightSpin;
+
     if (lidar.current) lidar.current.rotation.y = r.lidarSpin;
     if (scan.current) {
       scan.current.rotation.z = r.lidarSpin;
@@ -98,12 +187,11 @@ export function Amr({ index }: { index: number }) {
         </mesh>
       ))}
 
-      <group ref={wheels}>
-        <Wheel position={[-0.68, 0.3, 0.62]} />
-        <Wheel position={[0.68, 0.3, 0.62]} />
-        <Wheel position={[-0.68, 0.3, -0.62]} />
-        <Wheel position={[0.68, 0.3, -0.62]} />
-      </group>
+      {/* Wheels with individual spin axes */}
+      <Wheel position={[-0.68, 0.3, -0.62]} side="left" innerRef={flWheel} />
+      <Wheel position={[0.68, 0.3, -0.62]} side="right" innerRef={frWheel} />
+      <Wheel position={[-0.68, 0.3, 0.62]} side="left" innerRef={rlWheel} />
+      <Wheel position={[0.68, 0.3, 0.62]} side="right" innerRef={rrWheel} />
 
       {/* LiDAR tower */}
       <group position={[0, 0.66, -0.62]}>

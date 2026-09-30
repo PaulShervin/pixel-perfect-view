@@ -60,7 +60,7 @@ export function makeWallTexture() {
   const tex = new THREE.CanvasTexture(c);
   tex.wrapS = tex.wrapT = THREE.RepeatWrapping;
   tex.colorSpace = THREE.SRGBColorSpace;
-  tex.repeat.set(10, 1);
+  tex.repeat.set(12, 3);
   return tex;
 }
 

@@ -60,6 +60,7 @@ export function gridToWorld(x: number, y: number): [number, number] {
 
 export const WAREHOUSE_WIDTH = GRID_W * CELL;
 export const WAREHOUSE_DEPTH = GRID_H * CELL;
+export const WAREHOUSE_HEIGHT = 18;
 
 export function manhattan(a: Vec2, b: Vec2) {
   return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);

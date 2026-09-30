@@ -25,6 +25,8 @@ export interface Robot {
   waitTimer: number;
   speed: number;
   wheelSpin: number;
+  leftWheelSpin?: number;
+  rightWheelSpin?: number;
   lidarSpin: number;
   distance: number;
   tasksDone: number;
@@ -80,8 +82,34 @@ export interface ConflictRecord {
   cell: Vec2;
   yielding: string;
   proceeding: string;
+  yieldingId?: string;
+  proceedingId?: string;
+  yieldingPos?: Vec2;
+  proceedingPos?: Vec2;
+  phase: "detected" | "diverting" | "resolved";
+  reason: string;
   resolved: boolean;
   t: number;
+}
+
+export interface ScenarioStepInfo {
+  id: number;
+  label: string;
+  status: "completed" | "active" | "pending";
+}
+
+export interface ScenarioNarrative {
+  scenarioId: number;
+  title: string;
+  subtitle: string;
+  currentLiner: string;
+  activeStep: number;
+  steps: ScenarioStepInfo[];
+  alert: {
+    type: "info" | "warning" | "danger" | "success";
+    title: string;
+    text: string;
+  } | null;
 }
 
 export interface Snapshot {
@@ -94,4 +122,5 @@ export interface Snapshot {
   blockedCells: string[];
   events: SimEvent[];
   conflicts: ConflictRecord[];
+  narrative: ScenarioNarrative;
 }
